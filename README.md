@@ -1,2 +1,2 @@
 # Aurora_Dataloader
-AuroraFS에서 사용되는 eBPF 데이터 로더 개발 프로젝트
+DAOS 클라이언트 상에서 실행되는 멀티모달 지원 데이터 로더
