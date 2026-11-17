@@ -1,0 +1,25 @@
+
+# Python caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local dependencies / build output
+/.venv/
+/.deps/
+/.pydeps/
+/build/
+/bin/
+
+# Machine-specific environment
+/env/*
+!/env/*.example.sh
+/.env
+/daos_test_env.sh
+
+# Runtime output / credentials
+*.log
+*.stamp
+/logs/
+/runtime/
+/secrets/

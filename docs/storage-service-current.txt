@@ -1,0 +1,13 @@
+# /etc/systemd/system/daos-storage-auto-recover.service
+[Unit]
+Description=DAOS storage auto recover after boot
+After=network-online.target daos_server.service
+Wants=network-online.target daos_server.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/daos-storage-auto-recover.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
