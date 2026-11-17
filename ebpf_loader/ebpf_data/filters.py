@@ -20,3 +20,15 @@ def filter_events(df: pd.DataFrame, pids=None, comms=None, events=None, exclude_
     if exclude_events is not None:
         mask &= ~df["event"].isin(_as_list(exclude_events)).fillna(False).astype(bool)
     return df[mask].reset_index(drop=True)
+
+
+def filter_time_range(df: pd.DataFrame, start_sec=None, end_sec=None, column: str = "t_sec") -> pd.DataFrame:
+    """Keep events with ``start_sec <= t < end_sec`` (relative seconds by default)."""
+    if column not in df:
+        raise KeyError(f"column {column!r} not found; run finalize_events first")
+    mask = pd.Series(True, index=df.index)
+    if start_sec is not None:
+        mask &= df[column] >= start_sec
+    if end_sec is not None:
+        mask &= df[column] < end_sec
+    return df[mask].reset_index(drop=True)
