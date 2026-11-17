@@ -1,4 +1,5 @@
 """Readers for eBPF event files (CSV, JSON Lines; optionally gzip-compressed)."""
+import glob
 from pathlib import Path
 
 import pandas as pd
@@ -24,3 +25,32 @@ def read_events(path) -> pd.DataFrame:
     if name.endswith((".jsonl", ".ndjson", ".json")):
         return read_jsonl_events(path)
     raise ValueError(f"unsupported event file: {path}")
+
+
+SUPPORTED = (".csv", ".jsonl", ".ndjson", ".json", ".csv.gz", ".jsonl.gz", ".ndjson.gz", ".json.gz")
+
+
+def find_event_files(source):
+    """Resolve a file, a directory (searched recursively) or a glob pattern."""
+    p = Path(source)
+    if p.is_file():
+        return [p]
+    if p.is_dir():
+        files = [f for f in p.rglob("*") if f.is_file() and f.name.lower().endswith(SUPPORTED)]
+    else:
+        files = [Path(f) for f in glob.glob(str(source), recursive=True)]
+    files = sorted(files)
+    if not files:
+        raise FileNotFoundError(f"no event files found in {source}")
+    return files
+
+
+def load_events(source, add_source_column: bool = True) -> pd.DataFrame:
+    """Read every event file under ``source`` into one DataFrame."""
+    frames = []
+    for f in find_event_files(source):
+        df = read_events(f)
+        if add_source_column:
+            df["source_file"] = f.name
+        frames.append(df)
+    return pd.concat(frames, ignore_index=True)
