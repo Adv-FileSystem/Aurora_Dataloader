@@ -45,6 +45,10 @@ class EBPFDataset:
         self.table, self.point_labels = build_series(cfg)
         self.feature_names = list(self.table.columns)
         values = self.table.to_numpy(dtype=np.float32)
+        self.min_ = values.min(axis=0)
+        self.max_ = values.max(axis=0)
+        if cfg.get("normalize", True):
+            values = (values - self.min_) / (self.max_ - self.min_ + 1e-8)
         self.values = values
 
         w = cfg.get("window") or {}
@@ -57,3 +61,10 @@ class EBPFDataset:
 
     def __getitem__(self, idx):
         return self.windows[idx], self.labels[idx]
+
+    def as_torch(self):
+        """Wrap as a ``torch.utils.data.TensorDataset`` (requires torch)."""
+        import torch
+        from torch.utils.data import TensorDataset
+
+        return TensorDataset(torch.from_numpy(self.windows), torch.from_numpy(self.labels))
