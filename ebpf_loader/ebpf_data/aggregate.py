@@ -2,6 +2,8 @@
 import numpy as np
 import pandas as pd
 
+FEATURES = ("count", "bytes", "lat_mean", "lat_p95", "lat_max", "errors")
+
 
 def assign_bins(df: pd.DataFrame, interval_sec: float = 1.0, column: str = "t_sec") -> np.ndarray:
     """Integer bin index of each event."""
@@ -16,10 +18,12 @@ def _pivot(data, values, aggfunc, suffix):
     return table
 
 
-def aggregate_events(df: pd.DataFrame, interval_sec: float = 1.0, events=None) -> pd.DataFrame:
+def aggregate_events(df: pd.DataFrame, interval_sec: float = 1.0, events=None, n_bins=None) -> pd.DataFrame:
     """Return a DataFrame indexed by bin with ``<event>_<feature>`` columns.
 
-    ``events`` restricts and orders the event types.
+    ``events`` fixes the event types and their order (missing ones become all-zero
+    columns), so train and test data get identical feature layouts.
+    ``n_bins`` forces the series length; by default it runs to the last event.
     """
     data = df.assign(bin=assign_bins(df, interval_sec))
     if events is not None:
@@ -36,4 +40,9 @@ def aggregate_events(df: pd.DataFrame, interval_sec: float = 1.0, events=None) -
         err = data.assign(is_error=(data["ret"].fillna(0) < 0).astype(int))
         parts.append(_pivot(err, "is_error", "sum", "errors"))
     table = pd.concat(parts, axis=1).fillna(0.0)
-    return table.sort_index()  #@aggmore
+
+    names = list(events) if events is not None else sorted(data["event"].unique())
+    columns = [f"{e}_{f}" for e in names for f in FEATURES]
+    last = int(data["bin"].max()) + 1 if len(data) else 0
+    index = pd.RangeIndex(n_bins if n_bins is not None else last, name="bin")
+    return table.reindex(index=index, columns=columns, fill_value=0.0).astype("float32")
