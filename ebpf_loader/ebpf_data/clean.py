@@ -31,3 +31,14 @@ def normalize_events(df: pd.DataFrame, schema: EventSchema = None, ts_unit: str 
     out = out[out["event"] != ""]
     out["ts_ns"] = out["ts_ns"].round().astype("int64")
     return out.reset_index(drop=True)
+
+
+def finalize_events(df: pd.DataFrame, dedupe: bool = True) -> pd.DataFrame:
+    """Sort by time, drop exact duplicates and add ``t_sec`` (seconds since the first event)."""
+    out = df.sort_values("ts_ns", kind="stable")
+    if dedupe:
+        out = out.drop_duplicates()
+    out = out.reset_index(drop=True)
+    t0 = out["ts_ns"].iloc[0] if len(out) else 0
+    out["t_sec"] = (out["ts_ns"] - t0) / 1e9
+    return out
