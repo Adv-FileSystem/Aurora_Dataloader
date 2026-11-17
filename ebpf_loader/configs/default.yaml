@@ -1,0 +1,28 @@
+# Default configuration for the eBPF data loader
+source: ./data/ebpf          # file, directory or glob (csv / jsonl, optionally .gz)
+ts_unit: ns                  # unit of the timestamp column: ns | us | ms | s
+columns: {}                  # explicit mapping, e.g. {ts_ns: time, event: syscall}
+
+filter:
+  pids: null                 # e.g. [1201, 1202]
+  comms: null                # e.g. [postgres, fio]
+  events: null               # keep only these event types
+  exclude_events: null
+  start_sec: null            # relative to the first event
+  end_sec: null
+
+aggregate:
+  interval_sec: 1.0
+  events: null               # fixed event order, e.g. [read, write, openat, fsync]; null = all (sorted)
+
+labels:
+  intervals: null            # CSV with start_sec,end_sec columns
+
+window:
+  size: 60
+  stride: 10
+
+normalize: true              # per-feature min-max scaling
+
+output:
+  dir: ./outputs/ebpf
