@@ -7,6 +7,7 @@ import argparse
 import sys
 from pathlib import Path
 
+import numpy as np
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -48,12 +49,29 @@ def load_config(path, args):
     return cfg
 
 
+def save_outputs(ds, out_dir, cfg):
+    out = Path(out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    np.savez_compressed(
+        out / "ebpf_windows.npz",
+        windows=ds.windows,
+        labels=ds.labels,
+        feature_names=np.array(ds.feature_names),
+    )
+    ds.table.to_csv(out / "ebpf_series.csv")
+    with open(out / "config.yaml", "w", encoding="utf-8") as f:
+        yaml.safe_dump(cfg, f, sort_keys=False, allow_unicode=True)
+    return out
+
+
 def main():
     args = parse_args()
     cfg = load_config(args.config, args)
     ds = EBPFDataset(cfg)
     print(f"bins: {len(ds.table)}  features: {len(ds.feature_names)}")
     print(f"windows: {ds.windows.shape}  anomalous windows: {int(ds.labels.sum())}")
+    out = save_outputs(ds, (cfg.get("output") or {}).get("dir", "./outputs/ebpf"), cfg)
+    print(f"saved -> {out}")
 
 
 if __name__ == "__main__":
