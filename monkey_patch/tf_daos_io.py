@@ -1,6 +1,5 @@
 # tf_daos_io.py
 import tensorflow as tf
-from sitecustomize import original_open as _open
 import numpy as np
 import os
 import json
@@ -14,7 +13,7 @@ def _from_hdf5_as_bytes(path: str) -> tf.Tensor:
     return tf.convert_to_tensor(data.tobytes(), dtype=tf.string)
 
 def _from_posix_as_bytes(path: str) -> tf.Tensor:
-    with _open(path, "rb") as f:
+    with open(path, "rb") as f:
         buf = f.read()
 
     return tf.convert_to_tensor(buf, dtype=tf.string)
